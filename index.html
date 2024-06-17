@@ -56,6 +56,12 @@
             width: 100%;
             height: 400px;
         }
+        .positive-change {
+            color: green;
+        }
+        .negative-change {
+            color: red;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -75,6 +81,9 @@
     <div class="portfolio hidden">
         <div class="container">
             <h2>Total USD: <span id="total-usd"></span></h2>
+            <h2>Total TON: <span id="total-ton"></span></h2>
+            <h2>Total Difference (USD): <span id="total-diff-usd"></span></h2>
+            <h2>Total Difference (TON): <span id="total-diff-ton"></span></h2>
         </div>
         <div class="chart-container">
             <canvas id="chart"></canvas>
@@ -83,6 +92,7 @@
             <thead>
                 <tr>
                     <th>Jetton</th>
+                    <th>Image</th>
                     <th>Balance</th>
                     <th>Price (USD)</th>
                     <th>Change (24h)</th>
@@ -128,6 +138,21 @@
                 </tbody>
             </table>
         </div>
+        <div class="container">
+            <h3>Totals</h3>
+            <table class="portfolio-table">
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Liquidity (USD)</th>
+                        <th>Rewards Available (USD)</th>
+                    </tr>
+                </thead>
+                <tbody id="totals-table-body">
+                    <!-- Data will be inserted here -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -139,6 +164,9 @@
                     document.querySelector('.portfolio').classList.remove('hidden');
 
                     document.getElementById('total-usd').textContent = data.wallet.total_usd.toFixed(2);
+                    document.getElementById('total-ton').textContent = data.wallet.total_ton.toFixed(2);
+                    document.getElementById('total-diff-usd').textContent = data.wallet.total_diff_usd.toFixed(2);
+                    document.getElementById('total-diff-ton').textContent = data.wallet.total_diff_ton.toFixed(2);
 
                     const analytics = data.wallet.analytics;
                     const labels = analytics.map(item => item.balance.jetton.symbol);
@@ -169,14 +197,19 @@
 
                     const tableBody = document.getElementById('portfolio-table-body');
                     analytics.forEach(item => {
+                        const changeClass24h = parseFloat(item.balance.price.diff_24h.USD.replace('%', '')) >= 0 ? 'positive-change' : 'negative-change';
+                        const changeClass7d = parseFloat(item.balance.price.diff_7d.USD.replace('%', '')) >= 0 ? 'positive-change' : 'negative-change';
+                        const changeClass30d = parseFloat(item.balance.price.diff_30d.USD.replace('%', '')) >= 0 ? 'positive-change' : 'negative-change';
+                        
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td>${item.balance.jetton.name} (${item.balance.jetton.symbol})</td>
+                            <td><img src="${item.balance.jetton.image}" alt="${item.balance.jetton.symbol}" width="30" height="30"></td>
                             <td>${item.balance.balance}</td>
                             <td>${item.balance.price.prices.USD}</td>
-                            <td>${item.balance.price.diff_24h.USD}</td>
-                            <td>${item.balance.price.diff_7d.USD}</td>
-                            <td>${item.balance.price.diff_30d.USD}</td>
+                            <td class="${changeClass24h}">${item.balance.price.diff_24h.USD}</td>
+                            <td class="${changeClass7d}">${item.balance.price.diff_7d.USD}</td>
+                            <td class="${changeClass30d}">${item.balance.price.diff_30d.USD}</td>
                         `;
                         tableBody.appendChild(row);
                     });
@@ -209,6 +242,18 @@
                             `;
                             stakingTableBody.appendChild(row);
                         });
+                    });
+
+                    const totals = data.totals;
+                    const totalsTableBody = document.getElementById('totals-table-body');
+                    Object.keys(totals).forEach(source => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${source}</td>
+                            <td>${totals[source].liquidity_usd}</td>
+                            <td>${totals[source].rewards_available_usd}</td>
+                        `;
+                        totalsTableBody.appendChild(row);
                     });
                 });
         });
