@@ -66,10 +66,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<!--     <div class="container">
-        <p>Contact me on Telegram:</p>
-        <a href="https://t.me/YourTelegramUsername" target="_blank">@YourTelegramUsername</a>
-    </div> -->
 
     <div class="preloader">
         <div></div>
@@ -170,7 +166,7 @@
 
                     const analytics = data.wallet.analytics;
                     const labels = analytics.map(item => item.balance.jetton.symbol);
-                    const balances = analytics.map(item => parseFloat(item.balance.balance));
+                    const balances = analytics.map(item => parseFloat(item.balance.balance) / (10 ** item.balance.jetton.decimals));
                     const prices = analytics.map(item => item.balance.price.prices.USD);
                     
                     const ctx = document.getElementById('chart').getContext('2d');
@@ -197,6 +193,7 @@
 
                     const tableBody = document.getElementById('portfolio-table-body');
                     analytics.forEach(item => {
+                        const balance = (parseFloat(item.balance.balance) / (10 ** item.balance.jetton.decimals)).toFixed(6);
                         const changeClass24h = parseFloat(item.balance.price.diff_24h.USD.replace('%', '')) >= 0 ? 'positive-change' : 'negative-change';
                         const changeClass7d = parseFloat(item.balance.price.diff_7d.USD.replace('%', '')) >= 0 ? 'positive-change' : 'negative-change';
                         const changeClass30d = parseFloat(item.balance.price.diff_30d.USD.replace('%', '')) >= 0 ? 'positive-change' : 'negative-change';
@@ -205,7 +202,7 @@
                         row.innerHTML = `
                             <td>${item.balance.jetton.name} (${item.balance.jetton.symbol})</td>
                             <td><img src="${item.balance.jetton.image}" alt="${item.balance.jetton.symbol}" width="30" height="30"></td>
-                            <td>${item.balance.balance}</td>
+                            <td>${balance}</td>
                             <td>${item.balance.price.prices.USD}</td>
                             <td class="${changeClass24h}">${item.balance.price.diff_24h.USD}</td>
                             <td class="${changeClass7d}">${item.balance.price.diff_7d.USD}</td>
