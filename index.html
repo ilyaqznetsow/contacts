@@ -3,31 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@corefather</title>
+    <title>recv.ton</title>
     <style>
         body {
             background-color: black;
             color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+        }
+        .preloader {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
         }
-        .contact {
+        .preloader div {
+            width: 40px;
+            height: 40px;
+            margin: 10px;
+            background: white;
+            animation: preloader 1.2s infinite ease-in-out;
+        }
+        @keyframes preloader {
+            0%, 40%, 100% { transform: scaleY(0.4); }
+            20% { transform: scaleY(1); }
+        }
+        .hidden {
+            display: none;
+        }
+        .portfolio-table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        .portfolio-table th, .portfolio-table td {
+            border: 1px solid white;
+            padding: 8px;
             text-align: center;
         }
-        a {
-            color: #1DA1F2; /* Telegram Blue Color */
-            text-decoration: none;
-            font-size: 1.5em;
+        .portfolio-table th {
+            background-color: #333;
+        }
+        .chart-container {
+            width: 80%;
+            margin: 20px auto;
+        }
+        #chart {
+            width: 100%;
+            height: 400px;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="contact">
+    <div class="container">
+        <p>Contact me on Telegram:</p>
         <a href="https://t.me/corefather" target="_blank">@corefather</a>
     </div>
+
+    <div class="preloader">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+
+    <div class="portfolio hidden">
+        <div class="chart-container">
+            <canvas id="chart"></canvas>
+        </div>
+        <table class="portfolio-table">
+            <thead>
+                <tr>
+                    <th>Jetton</th>
+                    <th>Balance</th>
+                    <th>Price (USD)</th>
+                    <th>Change (24h)</th>
+                    <th>Change (7d)</th>
+                    <th>Change (30d)</th>
+                </tr>
+            </thead>
+            <tbody id="portfolio-table-body">
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch("https://likbez.dev/api/v2/portfolio/UQCJ81a9ELPIYJGHxavNe7HVhAx_iojnPev_jmT_2PEgEFVZ")
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('.preloader').classList.add('hidden');
+                    document.querySelector('.portfolio').classList.remove('hidden');
+
+                    const analytics = data.wallet.analytics;
+                    const labels = analytics.map(item => item.balance.jetton.symbol);
+                    const balances = analytics.map(item => parseFloat(item.balance.balance));
+                    const prices = analytics.map(item => item.balance.price.prices.USD);
+                    
+                    const ctx = document.getElementById('chart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Balance in USD',
+                                data: balances.map((balance, index) => balance * prices[index]),
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+
+                    const tableBody = document.getElementById('portfolio-table-body');
+                    analytics.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.balance.jetton.name} (${item.balance.jetton.symbol})</td>
+                            <td>${item.balance.balance}</td>
+                            <td>${item.balance.price.prices.USD}</td>
+                            <td>${item.balance.price.diff_24h.USD}</td>
+                            <td>${item.balance.price.diff_7d.USD}</td>
+                            <td>${item.balance.price.diff_30d.USD}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                });
+        });
+    </script>
 </body>
 </html>
