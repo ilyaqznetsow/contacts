@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>recv.ton</title>
+    <title>Portfolio Analytics</title>
     <style>
         body {
             background-color: black;
@@ -62,7 +62,7 @@
 <body>
     <div class="container">
         <p>Contact me on Telegram:</p>
-        <a href="https://t.me/corefather" target="_blank">@corefather</a>
+        <a href="https://t.me/YourTelegramUsername" target="_blank">@YourTelegramUsername</a>
     </div>
 
     <div class="preloader">
@@ -73,6 +73,9 @@
     </div>
 
     <div class="portfolio hidden">
+        <div class="container">
+            <h2>Total USD: <span id="total-usd"></span></h2>
+        </div>
         <div class="chart-container">
             <canvas id="chart"></canvas>
         </div>
@@ -91,6 +94,40 @@
                 <!-- Data will be inserted here -->
             </tbody>
         </table>
+        <div class="container">
+            <h3>Liquidity Pools</h3>
+            <table class="portfolio-table">
+                <thead>
+                    <tr>
+                        <th>Pool Name</th>
+                        <th>Total Supply (USD)</th>
+                        <th>Fee APR</th>
+                        <th>Volume (24h USD)</th>
+                    </tr>
+                </thead>
+                <tbody id="pools-table-body">
+                    <!-- Data will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+        <div class="container">
+            <h3>Staking</h3>
+            <table class="portfolio-table">
+                <thead>
+                    <tr>
+                        <th>Provider</th>
+                        <th>Symbol</th>
+                        <th>Amount</th>
+                        <th>Price (USD)</th>
+                        <th>Total USD</th>
+                        <th>Rewards USD</th>
+                    </tr>
+                </thead>
+                <tbody id="staking-table-body">
+                    <!-- Data will be inserted here -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -100,6 +137,8 @@
                 .then(data => {
                     document.querySelector('.preloader').classList.add('hidden');
                     document.querySelector('.portfolio').classList.remove('hidden');
+
+                    document.getElementById('total-usd').textContent = data.wallet.total_usd.toFixed(2);
 
                     const analytics = data.wallet.analytics;
                     const labels = analytics.map(item => item.balance.jetton.symbol);
@@ -140,6 +179,36 @@
                             <td>${item.balance.price.diff_30d.USD}</td>
                         `;
                         tableBody.appendChild(row);
+                    });
+
+                    const pools = data.dedust;
+                    const poolsTableBody = document.getElementById('pools-table-body');
+                    pools.forEach(pool => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${pool.pool_name}</td>
+                            <td>${pool.total_supply_usd}</td>
+                            <td>${pool.fee_apr}</td>
+                            <td>${pool.volume_24h_usd}</td>
+                        `;
+                        poolsTableBody.appendChild(row);
+                    });
+
+                    const staking = data.staking;
+                    const stakingTableBody = document.getElementById('staking-table-body');
+                    Object.keys(staking).forEach(provider => {
+                        staking[provider].forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${provider}</td>
+                                <td>${item.symbol}</td>
+                                <td>${item.amount}</td>
+                                <td>${item.price}</td>
+                                <td>${item.total_usd}</td>
+                                <td>${item.rewards_usd}</td>
+                            `;
+                            stakingTableBody.appendChild(row);
+                        });
                     });
                 });
         });
